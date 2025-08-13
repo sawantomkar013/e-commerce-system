@@ -1,0 +1,19 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "src\\Order Service\\Interface\\OrderService.Interface.API\\OrderService.Interface.API.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\Notification Service\\NotificationService\\NotificationService.API.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\Kafka Consumer Service\\KafkaConsumerService\\KafkaConsumerService.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]
