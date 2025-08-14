@@ -1,3 +1,17 @@
+# Remove old Kafka and ZooKeeper logs
+$kafkaLogPath = "C:\tmp\kafka-logs"
+$zookeeperLogPath = "C:\tmp\zookeeper"
+
+if (Test-Path $kafkaLogPath) {
+    Remove-Item -Recurse -Force $kafkaLogPath
+    Write-Host "Deleted old Kafka logs at $kafkaLogPath"
+}
+
+if (Test-Path $zookeeperLogPath) {
+    Remove-Item -Recurse -Force $zookeeperLogPath
+    Write-Host "Deleted old ZooKeeper logs at $zookeeperLogPath"
+}
+
 # Start ZooKeeper
 Start-Process powershell -ArgumentList @(
     "-NoExit",
