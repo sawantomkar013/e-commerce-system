@@ -72,7 +72,7 @@ namespace OrderService.Interface.API.Handlers
                 var suffix = order.KafkaTopicSuffix ?? string.Empty;
                 var topic = _kafkaBaseTopic + suffix;
                 var payload = JsonSerializer.Serialize(new { orderId = order.OrderId, timestamp = order.CreatedAt });
-                // await _kafka.ProduceAsync(topic, order.OrderId, payload, ct);
+                await _kafka.ProduceAsync(topic, order.OrderId, payload, ct);
 
                 var notifyPayload = new
                 {

@@ -35,7 +35,7 @@ namespace OrderService.Interface.API.Controllers
             var cacheKey = $"order:{order.OrderId}";
             await _redis.StringSetAsync(cacheKey, JsonSerializer.Serialize(order), TimeSpan.FromMinutes(5));
 
-            return CreatedAtAction(nameof(GetById), new { id = order.OrderId }, order);
+            return Ok(order); // CreatedAtAction(nameof(GetById), new { id = order.OrderId }, order);
         }
 
         [HttpGet("orders/{uuid:guid}")]

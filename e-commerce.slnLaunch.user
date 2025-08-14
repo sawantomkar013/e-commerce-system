@@ -11,7 +11,7 @@
         "Action": "Start"
       },
       {
-        "Path": "src\\Kafka Consumer Service\\KafkaConsumerService\\KafkaConsumerService.csproj",
+        "Path": "KafkaConsumerService\\KafkaConsumerService.csproj",
         "Action": "Start"
       }
     ]
