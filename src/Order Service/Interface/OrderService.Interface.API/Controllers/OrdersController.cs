@@ -5,13 +5,18 @@ using Microsoft.Extensions.Caching.Distributed;
 using OrderService.Domain.DataAccess;
 using OrderService.Interface.API.BindingModels.Orders;
 using OrderService.Interface.API.Commands.Orders;
+using OrderService.Interface.API.Mappers.Orders;
 using System.Text.Json;
 
 namespace OrderService.Interface.API.Controllers;
 
 [ApiController]
 [Route("api/v1")]
-public class OrdersController(IMediator mediator, IDistributedCache cache, OrderDbContext db) : ControllerBase
+public class OrdersController(
+    IMediator mediator, 
+    IDistributedCache cache, 
+    OrderDbContext db,
+    OrderMapper mapper) : ControllerBase
 {
     [HttpPost("orders")]
     public async Task<IActionResult> Create(
@@ -29,7 +34,10 @@ public class OrdersController(IMediator mediator, IDistributedCache cache, Order
         };
         await cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(order), cacheOptions, cancellationToken);
 
-        return Ok(order); // CreatedAtAction(nameof(GetById), new { id = order.OrderId }, order);
+        return CreatedAtAction(
+            nameof(GetById), 
+            new { uuid = order.Value.OrderId }, 
+            mapper.OrderToOrderResponseEntity(order.Value));
     }
 
     [HttpGet("orders/{uuid:guid}")]

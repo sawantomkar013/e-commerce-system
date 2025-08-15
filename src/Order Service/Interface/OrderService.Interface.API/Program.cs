@@ -8,6 +8,7 @@ using OrderService.Infrastructure.Logging;
 using OrderService.Infrastructure.MediatR;
 using OrderService.Infrastructure.NamingPolicy;
 using OrderService.Infrastructure.ServiceClients;
+using OrderService.Interface.API.Mappers.Orders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +18,8 @@ builder.ConfigureSerilog();
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddSingleton<OrderMapper>();
 
 // Db + Redis + MediatR + HttpClient + Kafka
 builder.Services.AddScoped<AuditSaveChangesInterceptor>();
