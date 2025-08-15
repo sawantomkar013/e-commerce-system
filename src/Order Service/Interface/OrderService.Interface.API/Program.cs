@@ -5,7 +5,8 @@ using OrderService.Infrastructure.BackgroundJobs;
 using OrderService.Infrastructure.EntityFramework;
 using OrderService.Infrastructure.GlobalValidation;
 using OrderService.Infrastructure.Logging;
-using OrderService.Infrastructure.MediatRSetup;
+using OrderService.Infrastructure.MediatR;
+using OrderService.Infrastructure.NamingPolicy;
 using OrderService.Infrastructure.ServiceClients;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -41,7 +42,21 @@ builder.Services.Configure<KafkaSettings>(kafkaSection);
 
 builder.Services.AddSingleton<IKafkaProducer, KafkaProducer>();
 
-builder.Services.AddControllers();
+// Configure API behavior with snake_case serialization
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.PropertyNamingPolicy = new SnakeCaseNamingPolicy();
+    options.SerializerOptions.DictionaryKeyPolicy = new SnakeCaseNamingPolicy();
+    options.SerializerOptions.PropertyNameCaseInsensitive = true;
+});
+
+
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.PropertyNamingPolicy = new SnakeCaseNamingPolicy();
+    options.JsonSerializerOptions.DictionaryKeyPolicy = new SnakeCaseNamingPolicy();
+    options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -50,6 +65,10 @@ builder.Services.AddSwaggerGen(c =>
         Title = "Order Service API",
         Version = "v1"
     });
+
+    // This ensures snake_case is reflected in schema names
+    c.SchemaGeneratorOptions.SchemaIdSelector = (type) => type.Name;
+    c.SchemaFilter<SnakeCaseSchemaFilter>();
 });
 
 builder.Services.AddCustomValidationResponses();

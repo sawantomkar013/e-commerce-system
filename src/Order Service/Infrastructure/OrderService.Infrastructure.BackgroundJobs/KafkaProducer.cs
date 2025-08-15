@@ -1,7 +1,6 @@
 using Confluent.Kafka;
 using Microsoft.Extensions.Options;
 using OrderService.Domain.DataAccess.Entities;
-using OrderService.Infrastructure.Helpers;
 
 namespace OrderService.Infrastructure.BackgroundJobs;
 

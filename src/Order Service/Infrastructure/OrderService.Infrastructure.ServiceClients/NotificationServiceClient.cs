@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
 using OrderService.Domain.DataAccess.Entities;
-using OrderService.Infrastructure.Helpers;
 using Polly;
 using Polly.Retry;
 using System.Net.Http.Json;
