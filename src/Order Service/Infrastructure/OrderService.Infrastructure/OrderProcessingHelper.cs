@@ -1,7 +1,6 @@
-﻿namespace OrderService.Infrastructure;
+﻿using OrderService.Domain.DataAccess.Entities;
 
-using OrderService.Domain.DataAccess.Entities;
-using System;
+namespace OrderService.Infrastructure;
 
 public static class OrderProcessingHelper
 {

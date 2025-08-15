@@ -9,16 +9,22 @@ public class KafkaProducer : IKafkaProducer, IDisposable
     private readonly IProducer<string, string> _producer;
     private readonly KafkaSettings _settings;
 
-    public KafkaProducer(IOptions<KafkaSettings> options)
+    public KafkaProducer(IOptions<KafkaSettings> options, IProducer<string, string>? producer = null)
     {
         _settings = options.Value;
 
-        var config = new ProducerConfig
+        if (producer != null)
         {
-            BootstrapServers = _settings?.BootstrapServers ?? "localhost:9092"
-        };
-
-        _producer = new ProducerBuilder<string, string>(config).Build();
+            _producer = producer;
+        }
+        else
+        {
+            var config = new ProducerConfig
+            {
+                BootstrapServers = _settings?.BootstrapServers ?? "localhost:9092"
+            };
+            _producer = new ProducerBuilder<string, string>(config).Build();
+        }
     }
 
     public async Task<KafkaProducerResult> ProduceAsync(OrderStatus status, string key, string value, CancellationToken cancellationToken = default)

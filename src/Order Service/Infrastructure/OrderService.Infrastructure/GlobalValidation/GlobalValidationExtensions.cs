@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace OrderService.Infrastructure.GlobalValidation;
-public static class ValidationConfig
+public static class GlobalValidationExtensions
 {
     public static IServiceCollection AddCustomValidationResponses(this IServiceCollection services)
     {
