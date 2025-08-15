@@ -6,7 +6,7 @@ using OrderService.Domain.DataAccess.Entities;
 using OrderService.Interface.API.Commands.Orders;
 using System.Text.Json;
 
-namespace OrderService.Interface.API.Handlers;
+namespace OrderService.Interface.API.Handlers.Orders;
 
 public class GetOrderByIdQueryHandler(OrderDbContext db, IDistributedCache cache) : IRequestHandler<GetOrderByIdQuery, Order?>
 {

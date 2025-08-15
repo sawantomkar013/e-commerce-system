@@ -8,7 +8,7 @@ using OrderService.Interface.API.Mappers.Orders;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 
-namespace OrderService.Interface.API.Controllers;
+namespace OrderService.Interface.API.Controllers.Orders;
 
 [ApiController]
 [Route("api/v1")]

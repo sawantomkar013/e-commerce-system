@@ -9,7 +9,7 @@ using CreateOrderResponse = OrderService.Interface.API.Commands.Response<
     OrderService.Domain.DataAccess.Entities.Order,
     OrderService.Interface.API.Commands.Orders.CreateOrderRequest.Errors>;
 
-namespace OrderService.Interface.API.Handlers;
+namespace OrderService.Interface.API.Handlers.Orders;
 
 public class CreateOrderRequestHandler(
     OrderDbContext dbContext,
