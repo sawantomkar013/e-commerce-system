@@ -1,6 +1,6 @@
-using System.Runtime.Serialization;
+﻿using System.Runtime.Serialization;
 
-namespace OrderService.Domain.DataAccess.Entities;
+namespace OrderService.Interface.API.BindingModels;
 
 public enum OrderStatus
 {

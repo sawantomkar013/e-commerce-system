@@ -1,7 +1,8 @@
-namespace OrderService.Infrastructure.BackgroundJobs
+using OrderService.Domain.DataAccess.Entities;
+
+namespace OrderService.Infrastructure.BackgroundJobs;
+
+public interface IKafkaProducer
 {
-    public interface IKafkaProducer
-    {
-        Task ProduceAsync(string topic, string key, string value, CancellationToken ct = default);
-    }
+    Task<KafkaProducerResult> ProduceAsync(OrderStatus orderStatus, string key, string value, CancellationToken cancellationToken = default);
 }

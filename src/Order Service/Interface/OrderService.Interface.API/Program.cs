@@ -1,10 +1,9 @@
-using Confluent.Kafka;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using OrderService.Domain.DataAccess;
 using OrderService.Infrastructure.BackgroundJobs;
-using OrderService.Infrastructure.Caching;
 using OrderService.Infrastructure.EntityFramework;
+using OrderService.Infrastructure.GlobalValidation;
 using OrderService.Infrastructure.Logging;
 using OrderService.Infrastructure.MediatRSetup;
 using OrderService.Infrastructure.ServiceClients;
@@ -19,15 +18,15 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Db + Redis + MediatR + HttpClient + Kafka
+builder.Services.AddScoped<AuditSaveChangesInterceptor>();
 var conn = builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=app.db";
 builder.Services.AddOrderDb(conn);
 
 var redisConn = builder.Configuration.GetValue<string>("Redis:Connection") ?? "localhost:6379";
 builder.Services.AddStackExchangeRedisCache(options =>
 {
-    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+    options.Configuration = redisConn;
 });
-builder.Services.AddRedisCache(redisConn);
 
 builder.Services.AddMediatRAndBehaviors(typeof(Program).Assembly);
 
@@ -37,8 +36,9 @@ builder.Services.AddHttpClient<INotificationClient, NotificationServiceClient>(c
     client.BaseAddress = new Uri(notifyBase); // NotificationService URL
 });
 
-var kafkaBootstrap = builder.Configuration.GetValue<string>("Kafka:BootstrapServers") ?? "localhost:9092";
-builder.Services.AddSingleton(new ProducerConfig { BootstrapServers = kafkaBootstrap });
+var kafkaSection = builder.Configuration.GetSection("Kafka");
+builder.Services.Configure<KafkaSettings>(kafkaSection);
+
 builder.Services.AddSingleton<IKafkaProducer, KafkaProducer>();
 
 builder.Services.AddControllers();
@@ -51,6 +51,8 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1"
     });
 });
+
+builder.Services.AddCustomValidationResponses();
 
 var app = builder.Build();
 

@@ -1,59 +1,56 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using StackExchange.Redis;
-using System.Text.Json;
-using OrderService.Interface.API.Handlers;
-using OrderService.Domain.DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using OrderService.Domain.DataAccess;
+using OrderService.Interface.API.BindingModels.Orders;
+using OrderService.Interface.API.Commands.Orders;
+using System.Text.Json;
 
-namespace OrderService.Interface.API.Controllers
+namespace OrderService.Interface.API.Controllers;
+
+[ApiController]
+[Route("api/v1")]
+public class OrdersController(IMediator mediator, IDistributedCache cache, OrderDbContext db) : ControllerBase
 {
-    [ApiController]
-    [Route("api/v1")]
-    public class OrdersController : ControllerBase
+    [HttpPost("orders")]
+    public async Task<IActionResult> Create(
+        [FromBody] CreateOrderRequestEntity createOrderRequestEntity, 
+        CancellationToken cancellationToken)
     {
-        private readonly IMediator _mediator;
-        private readonly IDatabase _redis;
-        private readonly OrderDbContext _db;
+        var orderRequest = new CreateOrderRequest(createOrderRequestEntity);
 
-        public OrdersController(IMediator mediator, IConnectionMultiplexer mux, OrderDbContext db)
+        var order = await mediator.Send(orderRequest, cancellationToken);
+
+        var cacheKey = $"order:{order.Value.OrderId}";
+        var cacheOptions = new DistributedCacheEntryOptions
         {
-            _mediator = mediator;
-            _redis = mux.GetDatabase();
-            _db = db;
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
+        };
+        await cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(order), cacheOptions, cancellationToken);
+
+        return Ok(order); // CreatedAtAction(nameof(GetById), new { id = order.OrderId }, order);
+    }
+
+    [HttpGet("orders/{uuid:guid}")]
+    public async Task<IActionResult> GetById(Guid uuid, CancellationToken cancellationToken)
+    {
+        var cacheKey = $"order:{uuid}";
+        var cached = await cache.GetStringAsync(cacheKey, cancellationToken);
+        if (cached is not null)
+        {
+            var order = JsonSerializer.Deserialize<Domain.DataAccess.Entities.Order>(cached!);
+            return Ok(order);
         }
 
-        [HttpPost("orders")]
-        public async Task<IActionResult> Create([FromBody] CreateOrderCommand cmd, CancellationToken ct)
+        var fromDb = await db.Orders.FirstOrDefaultAsync(o => o.OrderId == uuid, cancellationToken);
+        if (fromDb is null) return NotFound();
+
+        var cacheOptions = new DistributedCacheEntryOptions
         {
-            if (string.IsNullOrWhiteSpace(cmd.OrderId)) return BadRequest("OrderId required");
-            if (!Enum.IsDefined(typeof(OrderStatus), cmd.Status)) return BadRequest("Invalid status");
-
-            var order = await _mediator.Send(cmd, ct);
-
-            var cacheKey = $"order:{order.OrderId}";
-            await _redis.StringSetAsync(cacheKey, JsonSerializer.Serialize(order), TimeSpan.FromMinutes(5));
-
-            return Ok(order); // CreatedAtAction(nameof(GetById), new { id = order.OrderId }, order);
-        }
-
-        [HttpGet("orders/{uuid:guid}")]
-        public async Task<IActionResult> GetById(string id, CancellationToken ct)
-        {
-            var cacheKey = $"order:{id}";
-            var cached = await _redis.StringGetAsync(cacheKey);
-            if (cached.HasValue)
-            {
-                var order = JsonSerializer.Deserialize<Domain.DataAccess.Entities.Order>(cached!);
-                return Ok(order);
-            }
-
-            var fromDb = await _db.Orders.FirstOrDefaultAsync(o => o.OrderId == id, ct);
-            if (fromDb is null) return NotFound();
-
-            await _redis.StringSetAsync(cacheKey, JsonSerializer.Serialize(fromDb), TimeSpan.FromMinutes(5));
-            return Ok(fromDb);
-        }
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
+        };
+        await cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(fromDb), cacheOptions, cancellationToken);
+        return Ok(fromDb);
     }
 }

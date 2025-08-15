@@ -1,39 +1,75 @@
 using Microsoft.Extensions.Logging;
-using System.Net.Http;
+using OrderService.Domain.DataAccess.Entities;
+using OrderService.Infrastructure.Helpers;
+using Polly;
+using Polly.Retry;
 using System.Net.Http.Json;
 
-namespace OrderService.Infrastructure.ServiceClients
+namespace OrderService.Infrastructure.ServiceClients;
+
+public class NotificationServiceClient : INotificationClient
 {
-    public class NotificationServiceClient : INotificationClient
+    private readonly HttpClient _http;
+    private readonly ILogger<NotificationServiceClient> _logger;
+
+    public NotificationServiceClient(HttpClient http, ILogger<NotificationServiceClient> logger)
     {
-        private readonly HttpClient _http;
-        private readonly ILogger<NotificationServiceClient> _logger;
+        _http = http;
+        _logger = logger;
+    }
 
-        public NotificationServiceClient(HttpClient http, ILogger<NotificationServiceClient> logger)
-        {
-            _http = http;
-            _logger = logger;
-        }
+    public async Task<NotificationResult> SendAsync(OrderStatus orderStatus, object payload, CancellationToken cancellationToken)
+    {
+        var retryPolicy = CreatePollyMechanism(orderStatus);
 
-        public async Task SendAsync(object payload, int retryAttempts, CancellationToken ct)
+        try
         {
-            var delay = TimeSpan.FromMilliseconds(200);
-            for (var attempt = 0; attempt <= retryAttempts; attempt++)
+            HttpResponseMessage response = await retryPolicy.ExecuteAsync(async () =>
             {
-                try
-                {
-                    var resp = await _http.PostAsJsonAsync("/api/v1/notifications", payload, ct);
-                    resp.EnsureSuccessStatusCode();
-                    _logger.LogInformation("Notification delivered after {Attempt} attempt(s)", attempt + 1);
-                    return;
-                }
-                catch (Exception ex) when (attempt < retryAttempts)
-                {
-                    _logger.LogWarning(ex, "Notify failed (attempt {Attempt}/{Max}). Retrying in {Delay}...", attempt + 1, retryAttempts + 1, delay);
-                    await Task.Delay(delay, ct);
-                    delay = TimeSpan.FromMilliseconds(delay.TotalMilliseconds * 2);
-                }
-            }
+                var resp = await _http.PostAsJsonAsync("/api/v1/notifications", payload, cancellationToken);
+                resp.EnsureSuccessStatusCode();
+                return resp;
+            });
+
+            return new NotificationResult
+            {
+                Success = true,
+                Message = "Notification delivered successfully",
+                StatusCode = (int)response.StatusCode
+            };
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Notification delivery failed after retries.");
+            return new NotificationResult
+            {
+                Success = false,
+                Message = ex.Message,
+                StatusCode = 422 // Use 422 or appropriate code
+            };
+        }
+    }
+
+    private AsyncRetryPolicy<HttpResponseMessage> CreatePollyMechanism(OrderStatus orderStatus)
+    {
+        var initialDelay = OrderProcessingHelper.GetNotificationDelay(orderStatus);
+        var retryAttempts = OrderProcessingHelper.GetRetryAttempts(orderStatus);
+
+        // Define exponential backoff retry policy
+        return Policy
+            .Handle<HttpRequestException>()
+            .OrResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode)
+            .WaitAndRetryAsync(
+                retryCount: retryAttempts,
+                sleepDurationProvider: attempt => TimeSpan.FromMilliseconds(initialDelay.TotalMilliseconds * Math.Pow(2, attempt - 1)),
+                onRetryAsync: async (outcome, timespan, attempt, context) =>
+                {
+                    if (outcome.Exception != null)
+                        _logger.LogWarning(outcome.Exception, "Notify failed (attempt {Attempt}/{Max}). Retrying in {Delay}...", attempt, retryAttempts, timespan);
+                    else
+                        _logger.LogWarning("Notify failed with status {StatusCode} (attempt {Attempt}/{Max}). Retrying in {Delay}...",
+                            outcome.Result.StatusCode, attempt, retryAttempts, timespan);
+                    await Task.CompletedTask;
+                });
     }
 }

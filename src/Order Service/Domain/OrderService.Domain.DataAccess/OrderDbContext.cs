@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OrderService.Domain.DataAccess.Entities;
 
 namespace OrderService.Domain.DataAccess
@@ -12,6 +13,28 @@ namespace OrderService.Domain.DataAccess
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                foreach (var property in entityType.GetProperties())
+                {
+                    var type = property.ClrType;
+
+                    if (type.IsEnum)
+                    {
+                        var converterType = typeof(EnumMemberValueConverter<>).MakeGenericType(type);
+                        var converter = (ValueConverter)Activator.CreateInstance(converterType)!;
+                        property.SetValueConverter(converter);
+                    }
+                    else if (Nullable.GetUnderlyingType(type)?.IsEnum == true)
+                    {
+                        var enumType = Nullable.GetUnderlyingType(type)!;
+                        var converterType = typeof(EnumMemberValueConverter<>).MakeGenericType(enumType);
+                        var converter = (ValueConverter)Activator.CreateInstance(converterType)!;
+                        property.SetValueConverter(converter);
+                    }
+                }
+            }
+
             modelBuilder.Entity<Order>(b =>
             {
                 b.ToTable("Orders");

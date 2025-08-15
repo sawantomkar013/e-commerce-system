@@ -1,7 +1,8 @@
-namespace OrderService.Infrastructure.ServiceClients
+using OrderService.Domain.DataAccess.Entities;
+
+namespace OrderService.Infrastructure.ServiceClients;
+
+public interface INotificationClient
 {
-    public interface INotificationClient
-    {
-        Task SendAsync(object payload, int retryAttempts, CancellationToken ct);
-    }
+    Task<NotificationResult> SendAsync(OrderStatus orderStatus, object payload, CancellationToken cancellationToken);
 }
