@@ -2,14 +2,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 using Moq;
-using OrderService.Domain.DataAccess;
 using OrderService.Domain.DataAccess.Entities;
 using OrderService.Interface.API.BindingModels.Orders;
 using OrderService.Interface.API.Commands;
 using OrderService.Interface.API.Commands.Orders;
 using OrderService.Interface.API.Controllers.Orders;
 using OrderService.Interface.API.Mappers.Orders;
-using System.Text.Json;
 
 namespace OrderService.Interface.API.UnitTests.Controllers.Orders;
 
@@ -20,7 +18,7 @@ public class OrdersControllerTests
     private readonly OrderMapper _mapper = new();
 
     private OrdersController CreateController() =>
-        new OrdersController(_mediatorMock.Object, _cacheMock.Object, null!, _mapper);
+        new OrdersController(_mediatorMock.Object, _cacheMock.Object, _mapper);
 
     [Fact]
     public async Task Create_ShouldReturnCreatedResult_AndCacheOrder()

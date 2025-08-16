@@ -14,8 +14,7 @@ namespace OrderService.Interface.API.Controllers.Orders;
 [Route("api/v1")]
 public class OrdersController(
     IMediator mediator, 
-    IDistributedCache cache, 
-    OrderDbContext db,
+    IDistributedCache cache,
     OrderMapper mapper) : ControllerBase
 {
     [HttpPost("orders")]
