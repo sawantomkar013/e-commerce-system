@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using OrderService.Domain.DataAccess;
 using OrderService.Infrastructure.BackgroundJobs;
+using OrderService.Infrastructure.Caching;
 using OrderService.Infrastructure.EntityFramework;
 using OrderService.Infrastructure.GlobalValidation;
 using OrderService.Infrastructure.Logging;
@@ -26,10 +27,19 @@ builder.Services.AddScoped<AuditSaveChangesInterceptor>();
 var conn = builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=app.db";
 builder.Services.AddOrderDb(conn);
 
-var redisConn = builder.Configuration.GetValue<string>("Redis:Connection") ?? "localhost:6379";
+var redisSettingsSection = builder.Configuration.GetSection("Redis");
+builder.Services.Configure<RedisSettings>(redisSettingsSection);
+
+var redisSettings = redisSettingsSection.Get<RedisSettings>() ?? new RedisSettings
+{
+    Connection = "localhost:6379,abortConnect=false",
+    AbsoluteExpirationMinutes = 5
+};
+builder.Services.AddScoped<IRedisCacheService, RedisCacheService>();
+
 builder.Services.AddStackExchangeRedisCache(options =>
 {
-    options.Configuration = redisConn;
+    options.Configuration = redisSettings.Connection;
 });
 
 builder.Services.AddMediatRAndBehaviors(typeof(Program).Assembly);
