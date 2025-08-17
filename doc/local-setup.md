@@ -34,14 +34,14 @@ Follow these steps to set up and run the application and its dependencies locall
     With the dependencies extracted, you can now start the Redis and Kafka servers using the provided batch files.
 
     * **Start Redis Server**
-        Open a new terminal and run the following script to start the Redis server:
+        Open a new Command Prompt terminal and run the following script to start the Redis server:
 
         ```bash
         start-redis.bat
         ```
 
     * **Start Kafka Services & Consumers**
-        Open a separate terminal and run this batch file. It will launch the Zookeeper server, Kafka broker, and three Kafka Consumer instances for the following topics:
+        Open a separate Command Prompt terminal and run this batch file. It will launch the Zookeeper server, Kafka broker, and three Kafka Consumer instances for the following topics:
         * `orders.created.pending`
         * `orders.created.confirmed`
         * `orders.created.shipped`
@@ -57,16 +57,16 @@ Follow these steps to set up and run the application and its dependencies locall
 
 5.  **Run the .NET Services**
 
-    With all dependencies running, you can now start your microservices. Open two separate terminals for each service:
+    With all dependencies running, you can now start your microservices. Open two separate Command Prompt for each service:
 
     * **NotificationService.API**:
         ```bash
-        cd src/NotificationService/NotificationService.API
+        cd "src\Notification Service\NotificationService"
         dotnet run
         ```
     * **OrderService**:
         ```bash
-        cd src/OrderService/Interface/OrderService.Interface.API
+        cd "src\Order Service\Interface\OrderService.Interface.API"
         dotnet run
         ```
 
