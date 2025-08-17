@@ -53,3 +53,8 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+# Database files
+app.db
+app.db-shm
+app.db-wal
