@@ -14,6 +14,7 @@ The application is built on **.NET 8+** and adheres to modern architectural prin
 * [**Integration Points**](doc/integration-points.md) - Details on inter-service communication and external system integrations.
 * [**Local Setup**](doc/local-setup.md) - Instructions on how to set up and run the application locally.
 * [**Database Setup**](doc/database-setup.md) - Guidance on configuring the SQLite database.
+* [**Deployment Plan**](doc/deployment-plan.md) - Deployment plan for the application on AWS.
 
 ### 💻 API Endpoints
 
